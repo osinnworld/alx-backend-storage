@@ -1,23 +1,19 @@
--- Create a procedure that computes the average weighted score for all users.
+-- SQL script that 
 DELIMITER //
+
 CREATE PROCEDURE ComputeAverageWeightedScoreForUsers()
 BEGIN
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE cur CURSOR FOR SELECT id FROM users;
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-    DECLARE @id INT;
+    UPDATE users u
+    SET average_score = (
+        SELECT 
+            IFNULL(SUM(corrections.score * projects.weight) / SUM(projects.weight), 0)
+        FROM 
+            corrections
+        JOIN 
+            projects ON projects.id = corrections.project_id
+        WHERE 
+            corrections.user_id = u.id
+    );
+END//
 
-    OPEN cur;
-
-    read_loop: LOOP
-        FETCH cur INTO @id;
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-
-        CALL ComputeAverageWeightedScoreForUser(@id);
-    END LOOP;
-
-    CLOSE cur;
-END //
 DELIMITER ;
