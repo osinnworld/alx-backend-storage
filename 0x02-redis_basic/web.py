@@ -18,26 +18,19 @@ def count_requests(method: Callable) -> Callable:
     """
     Decorator to count number of times a URL is requested and cache the result.
     """
-
     @wraps(method)
     def wrapper(url: str) -> str:
         """
         Wrapper function to count requests and cache the HTML content.
         """
-
         redis_client.incr(f"count:{url}")
         cached_html = redis_client.get(f"cached:{url}")
         if cached_html:
             return cached_html.decode('utf-8')
-
         html_content = method(url)
-        redis_client.set(f'count:{url}', 0)
         redis_client.setex(f"cached:{url}", 10, html_content)
-
         return html_content
-
     return wrapper
-
 
 @count_requests
 def get_page(url: str) -> str:
